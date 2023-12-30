@@ -5,8 +5,9 @@ import { ChatHeader } from "@/components/ChatHeader";
 import { Companion, Message } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-// import { ChatForm } from "@/components/ChatForm";
-// import { ChatMessages } from "@/components/ChatMessages";
+import { ChatForm } from "@/components/ChatForm";
+import { ChatMessages } from "@/components/ChatMessages";
+import { ChatMessageProps } from "@/components/ChatMessage";
 
 interface ChatClientProps {
     companion: Companion & {
@@ -22,7 +23,7 @@ export const ChatClient = ({
 }: ChatClientProps) => {
 
     const router = useRouter();
-    const [messages, setMessages] = useState<any[]>(companion.Message);
+    const [messages, setMessages] = useState<ChatMessageProps[]>(companion.Message);
     const {
         input,
         isLoading,
@@ -33,7 +34,7 @@ export const ChatClient = ({
         api: `/api/chat/${companion.id}`,
 
         onFinish(_prompt, completion) {
-            const systemMessage = {
+            const systemMessage: ChatMessageProps = {
                 role: "system",
                 content: completion
             };
@@ -44,20 +45,20 @@ export const ChatClient = ({
             router.refresh();
         },
     });
-//     const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-//         const userMessage = {
-//             role: "user",
-//             content: input
-//         };
-// 
-//         setMessages((current) => [...current, userMessage]);
-// 
-//         handleSubmit(e);
-//     }
+    const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+        const userMessage: ChatMessageProps = {
+            role: "user",
+            content: input
+        };
+
+        setMessages((current) => [...current, userMessage]);
+
+        handleSubmit(e);
+    }
     return (
         <div className="flex flex-col h-full p-4 space-y-2">
             <ChatHeader companion={companion} />
-            {/* <ChatMessages
+            <ChatMessages
                 companion={companion}
                 isLoading={isLoading}
                 Message={messages}
@@ -67,7 +68,7 @@ export const ChatClient = ({
                 input={input}
                 handleInputChange={handleInputChange}
                 onSubmit={onSubmit}
-            /> */}
+            />
         </div>
     );
 };
