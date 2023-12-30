@@ -7,12 +7,16 @@ import {
 } from './ui/sheet'
 import Sidebar from "./sidebar"
 
-function MobileSidebar() {
+interface MobileSidebarProps {
+    isPro: boolean;
+}
+
+function MobileSidebar({ isPro }: MobileSidebarProps) {
     return (
         <Sheet>
             <SheetTrigger className="md:hidden pr-4"> <Menu /></SheetTrigger>
             <SheetContent side={"left"} className="p-0 bg-secondary pt-10 w-32">
-                <Sidebar />
+                <Sidebar isPro={isPro} />
             </SheetContent>
 
         </Sheet>

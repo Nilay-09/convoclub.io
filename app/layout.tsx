@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import './globals.css'
 import { cn } from '@/lib/utils'
 import { Toaster } from '@/components/ui/toaster'
+import { ProModal } from '@/components/pro-models'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -29,6 +30,7 @@ export default function RootLayout({
             defaultTheme="system"
             enableSystem
           >
+            <ProModal />
             {children}
             <Toaster />
           </ThemeProvider>
