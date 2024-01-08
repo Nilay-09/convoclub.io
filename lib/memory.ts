@@ -1,6 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { PineconeClient } from "@pinecone-database/pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
 import { PineconeStore } from "langchain/vectorstores/pinecone";
 
 export type CompanionKey = {
@@ -12,29 +12,23 @@ export type CompanionKey = {
 export class MemoryManager {
     private static instance: MemoryManager;
     private history: Redis;
-    private vectorDBClient: PineconeClient;
+    private vectorDBClient: Pinecone;
 
     public constructor() {
         this.history = Redis.fromEnv();
-        this.vectorDBClient = new PineconeClient();
+        this.vectorDBClient = new Pinecone();
     }
 
     public async init() {
-        if (this.vectorDBClient instanceof PineconeClient) {
-            await this.vectorDBClient.init({
-                apiKey: process.env.PINECONE_API_KEY!,
-                environment: process.env.PINECONE_ENVIRONMENT!,
-            });
-        }
+        // The new Pinecone client doesn't have an init method as per the migration guide.
     }
 
     public async vectorSearch(
         recentChatHistory: string,
         companionFileName: string
     ) {
-        const pineconeClient = <PineconeClient>this.vectorDBClient;
-
-        const pineconeIndex = pineconeClient.Index(
+        const pineconeClient = this.vectorDBClient;
+        const pineconeIndex = pineconeClient.index(
             process.env.PINECONE_INDEX! || ""
         );
 
