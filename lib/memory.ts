@@ -2,6 +2,8 @@ import { Redis } from "@upstash/redis";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { PineconeStore } from "langchain/vectorstores/pinecone";
+import { Document } from "langchain/document";
+
 
 export type CompanionKey = {
     companionName: string;
@@ -16,19 +18,27 @@ export class MemoryManager {
 
     public constructor() {
         this.history = Redis.fromEnv();
-        this.vectorDBClient = new Pinecone();
+        this.vectorDBClient = new Pinecone(
+            {
+                apiKey: process.env.PINECONE_API_KEY!,
+                environment: process.env.PINECONE_ENVIRONMENT!,
+            }
+        );
     }
 
     public async init() {
-        // The new Pinecone client doesn't have an init method as per the migration guide.
+        if (this.vectorDBClient instanceof Pinecone) {
+            this.vectorDBClient.listIndexes();
+        }
     }
 
     public async vectorSearch(
         recentChatHistory: string,
         companionFileName: string
     ) {
-        const pineconeClient = this.vectorDBClient;
-        const pineconeIndex = pineconeClient.index(
+        const pineconeClient = <Pinecone>this.vectorDBClient;
+
+        const pineconeIndex = pineconeClient.Index(
             process.env.PINECONE_INDEX! || ""
         );
 
@@ -43,6 +53,37 @@ export class MemoryManager {
                 console.log("WARNING: failed to get vector search results.", err);
             });
         return similarDocs;
+    }
+
+    public async UpsertChatHistory(
+        ChatHistory: string,
+        companionFileName: string
+    ) {
+        const pineconeClient = <Pinecone>this.vectorDBClient;
+        const pineconeIndex = pineconeClient.Index(
+            process.env.PINECONE_INDEX! || ""
+        );
+
+        const docs = [
+            new Document({
+                metadata: {
+                    fileName: companionFileName,
+                },
+                pageContent: ChatHistory,
+            }),
+        ];
+
+        try {
+            await PineconeStore.fromDocuments(docs,
+                new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY }),
+                { pineconeIndex }
+            );
+
+            console.log("INFO: successfully upserted chat history.");
+
+        } catch (error) {
+            console.log("WARNING: failed to upsert chat history.", error);
+        }
     }
 
     public static async getInstance(): Promise<MemoryManager> {
